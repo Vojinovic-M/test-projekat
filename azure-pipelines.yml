@@ -8,15 +8,15 @@ trigger:
 
 pool:
   name: Default
-jobs:
-- job: one_job  
-  steps:
-  - script: |
-      echo Add other tasks to build, test, and deploy your project.
-    displayName: 'Run a multi-line script'
+# jobs:
+# - job: one_job  
+steps:
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+  displayName: 'Run a multi-line script'
 
-pr: none
-resources:
-  repositories:
-    - repository: self
-      trigger: none
+# pr: none
+# resources:
+#   repositories:
+#     - repository: self
+#       trigger: none
