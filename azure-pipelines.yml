@@ -6,6 +6,9 @@
 trigger:
 - master
 
+pool:
+  name: Default
+  
 steps:
 - script: |
     echo Add other tasks to build, test, and deploy your project.
