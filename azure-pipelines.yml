@@ -76,6 +76,37 @@ stages:
         publishLocation: pipeline
       displayName: 'Publish Deployment Artifact'
 
+- stage: Build Image
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - job: Build_Docker
+      pool: Default
+
+      steps:
+        - task: DockerInstaller@0
+          displayName: 'Install Docker (if missing)'
+
+        # - task: Docker@2
+        #   displayName: 'Login to Docker Hub'
+        #   inputs:
+        #     command: login
+        #     containerRegistry: # OVO OSTAJE ZA SUTRA.
+
+        # - task: Docker@2
+        #   displayName: 'Build Docker Image'
+        #   inputs:
+        #     command: build
+        #     Dockerfile: '$(workingDirectory)/Dockerfile'
+        #     tags: # NESTO OPET ZA SUTRA DOCKER URL??
+        #     buildContext: '$(workingDirectory)'
+        
+        # - task: Docker@2
+        #   displayName: 'Push Docker Image'
+        #   inputs:
+        #     command: push
+        #     tags: # ISTO KAO PRETHODNI
+
 - stage: Deploy
   displayName: Deploy to Test
   dependsOn: Build
@@ -95,103 +126,3 @@ stages:
           echo "Simulating deployment"
           ls -R $(Pipeline.Workspace)/angular-app
         displayName: 'Verify Deployment Package'
-        
-trigger:
-  branches:
-    include:
-      - master
-
-pr: none  # pipeline ide dvaput bez PR constraint
-
-pool:
-  name: Default
-
-resources:
-  repositories:
-    - repository: self
-      trigger: none
-
-variables:
-  workingDirectory: '$(System.DefaultWorkingDirectory)'
-  distPath: '$(System.DefaultWorkingDirectory)\dist'
-  projectPath: '$(System.DefaultWorkingDirectory)\dist\test-projekat'
-
-stages:
-- stage: Build
-  jobs:
-  - job: Build_Angular  
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '18.x'
-      displayName: 'Install Node.js (if missing)'
-      condition: eq(variables['Agent.OS'], 'Windows_NT')
-
-    - script: node --version && npm --version
-      displayName: 'Check Node/npm versions'
-
-    - script: npm install -D @angular/cli
-      displayName: 'Install Angular CLI'
-      workingDirectory: $(workingDirectory)
-
-    - script: npm ci
-      displayName: 'Install dependencies'
-      workingDirectory: $(workingDirectory)
-
-    - script: ng build --configuration=production
-      displayName: 'Build Angular Production'
-      workingDirectory: $(workingDirectory)
-
-    - script: npx ng lint
-      displayName: 'Run Angular Linter'
-      workingDirectory: $(workingDirectory)
-      continueOnError: false
-
-    - script: ng test --watch=false --code-coverage
-      displayName: 'Execute Angular Tests'
-      workingDirectory: $(workingDirectory)
-      continueOnError: false
-      condition: succeeded()
-      timeoutInMinutes: 5
-
-
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(workingDirectory)/dist'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
-      displayName: 'Archive build artifacts'
-
-
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'angular_build'
-      displayName: 'Publish Build Artifacts'
-
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(distPath)
-        artifact: 'angular-app'
-        publishLocation: pipeline
-      displayName: 'Publish Deployment Artifact'
-
-- stage: Deploy
-  displayName: Deploy to Test
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-    - job: Web_Deploy
-      displayName: Deploy Angular App
-      pool:
-        name: Default
-      
-      steps:
-      - download: current
-        artifact: angular-app
-        displayName: 'Download Build Artifact'
-      
-      - script: |
-          echo "Simulating deployment"
-          dir /s "$(Pipeline.Workspace)\angular-app"
-        displayName: 'Verify Deployment Package (CMD)'
