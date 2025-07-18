@@ -10,6 +10,7 @@ jobs:
       echo Add other tasks to build, test, and deploy your project.
     displayName: 'Run a multi-line script'
 
+pr: none
 resources:
   repositories:
     - repository: self
