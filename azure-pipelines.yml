@@ -3,7 +3,7 @@ trigger:
     include:
       - master
 
-pr: none # pipeline ide dvaput bez PR constraint
+pr: none  # pipeline ide dvaput bez PR constraint
 
 pool:
   name: Default
@@ -16,46 +16,82 @@ resources:
 variables:
   workingDirectory: '$(System.DefaultWorkingDirectory)'
 
+stages:
+- stage: Build
+  jobs:
+  - job: Build_Angular  
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js (if missing)'
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
 
-jobs:
-- job: Build_Angular  
-  steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: '18.x'
-    displayName: 'Install Node.js (if missing)'
-    condition: eq(variables['Agent.OS'], 'Windows_NT')
+    - script: node --version && npm --version
+      displayName: 'Check Node/npm versions'
 
-  - script: node --version && npm --version
-    displayName: 'Check Node/npm versions'
+    - script: npm install -D @angular/cli
+      displayName: 'Install Angular CLI'
+      workingDirectory: $(workingDirectory)
 
-  - script: npm install -D @angular/cli
-    displayName: 'Install Angular CLI'
-    workingDirectory: $(workingDirectory)
+    - script: npm ci
+      displayName: 'Install dependencies'
+      workingDirectory: $(workingDirectory)
 
-  - script: npm ci
-    displayName: 'Install dependencies'
-    workingDirectory: $(workingDirectory)
+    - script: ng build --configuration=production
+      displayName: 'Build Angular Production'
+      workingDirectory: $(workingDirectory)
 
-  - script: ng build --configuration=production
-    displayName: 'Build Angular Production'
-    workingDirectory: $(workingDirectory)
+    - script: ng lint
+      displayName: 'Run Angular Linter'
+      workingDirectory: $(workingDirectory)
+      continueOnError: false
 
-  - script: ng test --watch=false --code-coverage
-    displayName: 'Execute Angular Tests'
-    workingDirectory: $(workingDirectory)
-    condition: succeeded()
-    timeoutInMinutes: 5
+    - script: ng test --watch=false --code-coverage
+      displayName: 'Execute Angular Tests'
+      workingDirectory: $(workingDirectory)
+      continueOnError: false
+      condition: succeeded()
+      timeoutInMinutes: 5
 
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: '$(workingDirectory)/dist'
-      includeRootFolder: false
-      archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
-    displayName: 'Archive build artifacts'
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'angular_build'
-    displayName: 'Publish Build Artifacts'
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(workingDirectory)/dist'
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+      displayName: 'Archive build artifacts'
+
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'angular_build'
+      displayName: 'Publish Build Artifacts'
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(workingDirectory)/dist/test-projekat'
+        artifact: 'angular-app'
+        publishLocation: pipeline
+      displayName: 'Publish Deployment Artifact'
+
+- stage: Deploy
+  displayName: Deploy to Test
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - job: Web_Deploy
+      displayName: Deploy Angular App
+      pool:
+        name: Default
+      
+      steps:
+      - download: current
+        artifact: angular-app
+        displayName: 'Download Build Artifact'
+      
+      - script: |
+          echo "Simulating deployment"
+          ls -R $(Pipeline.Workspace)/angular-app
+        displayName: 'Verify Deployment Package'
