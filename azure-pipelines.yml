@@ -36,7 +36,7 @@ jobs:
     displayName: 'Install dependencies'
     workingDirectory: $(workingDirectory)
 
-  - script: ng build --prod
+  - script: ng build --configuration=production
     displayName: 'Build Angular Production'
     workingDirectory: $(workingDirectory)
 
