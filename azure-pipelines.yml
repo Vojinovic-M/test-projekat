@@ -42,7 +42,7 @@ stages:
       displayName: 'Build Angular Production'
       workingDirectory: $(workingDirectory)
 
-    - script: ng lint test-projekat --fix
+    - script: npx ng lint
       displayName: 'Run Angular Linter'
       workingDirectory: $(workingDirectory)
       continueOnError: false
