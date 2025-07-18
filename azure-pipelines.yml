@@ -16,6 +16,7 @@ resources:
 variables:
   workingDirectory: '$(System.DefaultWorkingDirectory)'
 
+
 jobs:
 - job: Build_Angular  
   steps:
@@ -39,6 +40,12 @@ jobs:
   - script: ng build --configuration=production
     displayName: 'Build Angular Production'
     workingDirectory: $(workingDirectory)
+
+  - script: ng test --watch=false --code-coverage
+    displayName: 'Execute Angular Tests'
+    workingDirectory: $(workingDirectory)
+    condition: succeeded()
+    timeoutInMinutes: 5
 
   - task: ArchiveFiles@2
     inputs:
