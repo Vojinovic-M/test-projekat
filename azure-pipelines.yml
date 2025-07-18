@@ -76,7 +76,7 @@ stages:
         publishLocation: pipeline
       displayName: 'Publish Deployment Artifact'
 
-- stage: Build Image
+- stage: Build_Image
   dependsOn: Build
   condition: succeeded()
   jobs:
