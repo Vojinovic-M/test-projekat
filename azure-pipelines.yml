@@ -1,22 +1,17 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - master
 
 pool:
   name: Default
-# jobs:
-# - job: one_job  
-steps:
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-  displayName: 'Run a multi-line script'
+jobs:
+- job: one_job  
+  steps:
+  - script: |
+      echo Add other tasks to build, test, and deploy your project.
+    displayName: 'Run a multi-line script'
 
-# pr: none
-# resources:
-#   repositories:
-#     - repository: self
-#       trigger: none
+pr: none
+resources:
+  repositories:
+    - repository: self
+      trigger: none
