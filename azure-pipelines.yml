@@ -1,0 +1,29 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pr: none # pipeline ide dvaput bez PR constraint
+
+pool:
+  name: Default
+
+variables:
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+jobs:
+- job: Build_Angular  
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '18.x'
+    displayName: 'Install Node.js (if missing)'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+  - script: node --version && npm --version
+    displayName: 'Check Node/npm versions'
+
+resources:
+  repositories:
+    - repository: self
+      trigger: none
