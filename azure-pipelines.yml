@@ -8,6 +8,11 @@ pr: none # pipeline ide dvaput bez PR constraint
 pool:
   name: Default
 
+resources:
+  repositories:
+    - repository: self
+      trigger: none
+
 variables:
   workingDirectory: '$(System.DefaultWorkingDirectory)'
 
@@ -23,7 +28,27 @@ jobs:
   - script: node --version && npm --version
     displayName: 'Check Node/npm versions'
 
-resources:
-  repositories:
-    - repository: self
-      trigger: none
+  - script: npm install -D @angular/cli
+    displayName: 'Install Angular CLI'
+    workingDirectory: $(workingDirectory)
+
+  - script: npm ci
+    displayName: 'Install dependencies'
+    workingDirectory: $(workingDirectory)
+
+  - script: ng build --configuration=production
+    displayName: 'Build Angular Production'
+    workingDirectory: $(workingDirectory)
+
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: '$(workingDirectory)/dist'
+      includeRootFolder: false
+      archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+    displayName: 'Archive build artifacts'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'angular_build'
+    displayName: 'Publish Build Artifacts'
